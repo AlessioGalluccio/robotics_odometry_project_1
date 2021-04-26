@@ -150,6 +150,10 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
+add_executable(odometry src/odometry.cpp)
+add_dependencies(odometry custom_messages_generate_messages_cpp)
+target_link_libraries(odometry ${catkin_LIBRARIES})
+
 #############
 ## Install ##
 #############
