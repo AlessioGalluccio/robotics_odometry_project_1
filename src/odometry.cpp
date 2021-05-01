@@ -19,7 +19,7 @@ private:
   ros::Subscriber sub_fr;
   ros::Subscriber sub_rl;
   ros::Subscriber sub_rr;
-  //ros::Publisher pub; 
+  ros::Publisher pub; 
   ros::Timer timer1;
   
 public:
@@ -28,8 +28,8 @@ public:
     sub_fr = n.subscribe("/motor_speed_fr", 1, &pub_sub::callback_fr, this);
     sub_rl = n.subscribe("/motor_speed_rl", 1, &pub_sub::callback_rl, this);
     sub_rr = n.subscribe("/motor_speed_rr", 1, &pub_sub::callback_rr, this);
-    //pub = n.advertise<std_msgs::String>("/rechatter", 1);
-    //timer1 = n.createTimer(ros::Duration(1), &pub_sub::callback_t, this);
+    pub = n.advertise<robotics_hw1::MotorSpeed>("/odom_my", 1);
+    timer1 = n.createTimer(ros::Duration(1), &pub_sub::callback_t, this);
   }
 
   void callback_fl(const robotics_hw1::MotorSpeed msg){
@@ -47,28 +47,23 @@ public:
   void callback_rr(const robotics_hw1::MotorSpeed msg){
     speed_rr=msg;
   }
-
-    /*
-  void callback_m2(const std_msgs::String::ConstPtr& msg){
-    message2=*msg;
-  }
   
 
   void callback_t(const ros::TimerEvent&) {
-    pub.publish(message1);
-    pub.publish(message2);
+    pub.publish(speed_fl);
+    //pub.publish(message2);
     ROS_INFO("Callback 1 triggered");
   }
-  */
+  
 };
 
 
 int main(int argc, char **argv){
-    ros::init(argc, argv, "odom_mine");
-	ros::NodeHandle n;
-    pub_sub my_pub_sub;
-    ros::spin();
-    return 0;
+  ros::init(argc, argv, "odom_mine");
+  ros::NodeHandle n;
+  pub_sub my_pub_sub;
+  ros::spin();
+  return 0;
 }
 
 typedef struct{
