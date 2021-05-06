@@ -3,6 +3,8 @@
 #include "robotics_hw1/MotorSpeed.h"
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/exact_time.h>
+#include <message_filters/sync_policies/approximate_time.h>
 
 #include <sstream>
 
@@ -33,7 +35,7 @@ public:
   }
 
   void callback_t(const ros::TimerEvent&) {
-    pub.publish(speed_fl);
+    //pub.publish(speed_fl);
     //pub.publish(message2);
     ROS_INFO("Callback 1 triggered");
   }
@@ -41,12 +43,12 @@ public:
   pub_sub(){
   
 
-    message_filters::Subscriber<MotorSpeed> sub_fl(n,"/motor_speed_fl", 1);
-    message_filters::Subscriber<MotorSpeed> sub_fr(n,"/motor_speed_fr", 1);
-    message_filters::Subscriber<MotorSpeed> sub_rl(n,"/motor_speed_rl", 1);
-    message_filters::Subscriber<MotorSpeed> sub_rr(n,"/motor_speed_rr", 1);
-    //typedef message_filters::sync_policies::ApproximateTime<MotorSpeed,MotorSpeed,MotorSpeed,MotorSpeed> MySyncPolicy;
-    message_filters::TimeSynchronizer<MotorSpeed,MotorSpeed,MotorSpeed,MotorSpeed>sync(sub_fl,sub_fr, sub_rl, sub_rr, 10);
+    message_filters::Subscriber<MotorSpeed> sub_fl(n,"motor_speed_fl", 1);
+    message_filters::Subscriber<MotorSpeed> sub_fr(n,"motor_speed_fr", 1);
+    message_filters::Subscriber<MotorSpeed> sub_rl(n,"motor_speed_rl", 1);
+    message_filters::Subscriber<MotorSpeed> sub_rr(n,"motor_speed_rr", 1);
+    typedef message_filters::sync_policies::ApproximateTime<MotorSpeed,MotorSpeed,MotorSpeed,MotorSpeed> MySyncPolicy;
+    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10),sub_fl,sub_fr, sub_rl, sub_rr);
     sync.registerCallback(boost::bind(&pub_sub::callback_all_messages, this, _1,_2, _3, _4));
     pub = n.advertise<MotorSpeed>("/odom_my", 1);
     timer1 = n.createTimer(ros::Duration(1), &pub_sub::callback_t, this);
@@ -58,10 +60,28 @@ public:
   
 };
 
+void callback_all_messages(const MotorSpeedConstPtr& sub_fl, const MotorSpeedConstPtr& sub_fr, const MotorSpeedConstPtr& sub_rl,const MotorSpeedConstPtr& sub_rr){
+    //speed_fl = sub_fl;
+    //ROS_INFO("Callback all triggered: %f", speed_fl->rpm);
+    ROS_INFO("Callback ALL triggered");
+  }
+
 int main(int argc, char **argv){
   ros::init(argc, argv, "odom_mine");
   ros::NodeHandle n;
-  pub_sub my_pub_sub;
+  message_filters::Subscriber<MotorSpeed> giggino(n,"motor_speed_fl", 1);
+
+  message_filters::Subscriber<MotorSpeed> sub_fl(n,"motor_speed_fl", 1);
+    message_filters::Subscriber<MotorSpeed> sub_fr(n,"motor_speed_fr", 1);
+    message_filters::Subscriber<MotorSpeed> sub_rl(n,"motor_speed_rl", 1);
+    message_filters::Subscriber<MotorSpeed> sub_rr(n,"motor_speed_rr", 1);
+    typedef message_filters::sync_policies::ApproximateTime<MotorSpeed,MotorSpeed,MotorSpeed,MotorSpeed> MySyncPolicy;
+    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10),sub_fl,sub_fr, sub_rl, sub_rr);
+    sync.registerCallback(boost::bind(&callback_all_messages, _1, _2, _3, _4));
+
+
+
+  //pub_sub my_pub_sub;
   ros::spin();
   return 0;
 }
