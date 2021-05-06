@@ -107,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES project_1
-  CATKIN_DEPENDS robotics_hw1 roscpp rospy geometry_msgs message_filters
+#  CATKIN_DEPENDS robotics_hw1 roscpp rospy geometry_msgs message_filters
 #  DEPENDS system_lib
 )
 
