@@ -14,10 +14,10 @@ using namespace robotics_hw1;
 class pub_sub {
 
 public:
-  MotorSpeed speed_fl;
-  MotorSpeed speed_fr;
-  MotorSpeed speed_rl;
-  MotorSpeed speed_rr;
+  MotorSpeedConstPtr speed_fl;
+  MotorSpeedConstPtr speed_fr;
+  MotorSpeedConstPtr speed_rl;
+  MotorSpeedConstPtr speed_rr;
 
 private:
   ros::NodeHandle n; 
@@ -26,35 +26,50 @@ private:
   ros::Timer timer1;
   
 public:
-  void callback_all_messages(const MotorSpeed& sub_fl, const MotorSpeed& sub_fr, const MotorSpeed& sub_rl,const MotorSpeed& sub_rr){
+  void callback_all_messages(const MotorSpeedConstPtr& sub_fl, const MotorSpeedConstPtr& sub_fr, const MotorSpeedConstPtr& sub_rl,const MotorSpeedConstPtr& sub_rr){
     speed_fl = sub_fl;
-    ROS_INFO("Callback 1 triggered");
+    ROS_INFO("Callback all triggered: %f", speed_fl->rpm);
   }
-
-  pub_sub(){
-    message_filters::Subscriber<MotorSpeed> sub_fl(n,"/motor_speed_fl", 1);
-    message_filters::Subscriber<MotorSpeed> sub_fr(n,"/motor_speed_fr", 1);
-    message_filters::Subscriber<MotorSpeed> sub_rl(n,"/motor_speed_rl", 1);
-    message_filters::Subscriber<MotorSpeed> sub_rr(n,"/motor_speed_rr", 1);
-    message_filters::TimeSynchronizer<MotorSpeed,MotorSpeed,MotorSpeed,MotorSpeed>sync(sub_fl,sub_fr,sub_rl, sub_rr, 1);
-    //sync.registerCallback(boost::bind(&pub_sub::callback_all_messages, this, _1,_2,_3,_4));
-    pub = n.advertise<MotorSpeed>("/odom_my", 1);
-    timer1 = n.createTimer(ros::Duration(1), &pub_sub::callback_t, this);
-  }
-  
 
   void callback_t(const ros::TimerEvent&) {
     pub.publish(speed_fl);
     //pub.publish(message2);
     ROS_INFO("Callback 1 triggered");
   }
+
+  pub_sub(){
+  
+/*
+    message_filters::Subscriber<MotorSpeed> sub_fl(n,"/motor_speed_fl", 1);
+    message_filters::Subscriber<MotorSpeed> sub_fr(n,"/motor_speed_fr", 1);
+    message_filters::Subscriber<MotorSpeed> sub_rl(n,"/motor_speed_rl", 1);
+    message_filters::Subscriber<MotorSpeed> sub_rr(n,"/motor_speed_rr", 1);
+    message_filters::TimeSynchronizer<MotorSpeed,MotorSpeed,MotorSpeed,MotorSpeed>sync(sub_fl,sub_fr, sub_rl, sub_rr, 10);
+    sync.registerCallback(boost::bind(&pub_sub::callback_all_messages, this, _1,_2, _3, _4));
+    pub = n.advertise<MotorSpeed>("/odom_my", 1);
+    timer1 = n.createTimer(ros::Duration(1), &pub_sub::callback_t, this);
+   */ 
+  }
+  
+
+
   
 };
 
+void callback_all_messages(const robotics_hw1::MotorSpeedConstPtr& sub_fl, const robotics_hw1::MotorSpeedConstPtr& sub_fr, const robotics_hw1::MotorSpeedConstPtr& sub_rl,const robotics_hw1::MotorSpeedConstPtr& sub_rr){
+    //speed_fl = sub_fl;
+    //ROS_INFO("Callback all triggered: %f", sub_fl->rpm);
+  }
 
 int main(int argc, char **argv){
   ros::init(argc, argv, "odom_mine");
   ros::NodeHandle n;
+  message_filters::Subscriber<MotorSpeed> sub_fl(n,"/motor_speed_fl", 1);
+    message_filters::Subscriber<MotorSpeed> sub_fr(n,"/motor_speed_fr", 1);
+    message_filters::Subscriber<MotorSpeed> sub_rl(n,"/motor_speed_rl", 1);
+    message_filters::Subscriber<MotorSpeed> sub_rr(n,"/motor_speed_rr", 1);
+    message_filters::TimeSynchronizer<MotorSpeed,MotorSpeed,MotorSpeed,MotorSpeed>sync(sub_fl,sub_fr, sub_rl, sub_rr, 10);
+    sync.registerCallback(boost::bind(&callback_all_messages, _1,_2, _3, _4));
   pub_sub my_pub_sub;
   ros::spin();
   return 0;
