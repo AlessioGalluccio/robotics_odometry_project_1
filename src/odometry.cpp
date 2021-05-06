@@ -1,51 +1,45 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "robotics_hw1/MotorSpeed.h"
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
 
 #include <sstream>
+
+using namespace message_filters;
+using namespace robotics_hw1;
+
+
 
 class pub_sub {
 
 public:
-  robotics_hw1::MotorSpeed speed_fl;
-  robotics_hw1::MotorSpeed speed_fr;
-  robotics_hw1::MotorSpeed speed_rl;
-  robotics_hw1::MotorSpeed speed_rr;
+  MotorSpeed speed_fl;
+  MotorSpeed speed_fr;
+  MotorSpeed speed_rl;
+  MotorSpeed speed_rr;
 
 private:
   ros::NodeHandle n; 
 
-  ros::Subscriber sub_fl;
-  ros::Subscriber sub_fr;
-  ros::Subscriber sub_rl;
-  ros::Subscriber sub_rr;
   ros::Publisher pub; 
   ros::Timer timer1;
   
 public:
+  void callback_all_messages(const MotorSpeed& sub_fl, const MotorSpeed& sub_fr, const MotorSpeed& sub_rl,const MotorSpeed& sub_rr){
+    speed_fl = sub_fl;
+    ROS_INFO("Callback 1 triggered");
+  }
+
   pub_sub(){
-    sub_fl = n.subscribe("/motor_speed_fl", 1, &pub_sub::callback_fl, this);
-    sub_fr = n.subscribe("/motor_speed_fr", 1, &pub_sub::callback_fr, this);
-    sub_rl = n.subscribe("/motor_speed_rl", 1, &pub_sub::callback_rl, this);
-    sub_rr = n.subscribe("/motor_speed_rr", 1, &pub_sub::callback_rr, this);
-    pub = n.advertise<robotics_hw1::MotorSpeed>("/odom_my", 1);
+    message_filters::Subscriber<MotorSpeed> sub_fl(n,"/motor_speed_fl", 1);
+    message_filters::Subscriber<MotorSpeed> sub_fr(n,"/motor_speed_fr", 1);
+    message_filters::Subscriber<MotorSpeed> sub_rl(n,"/motor_speed_rl", 1);
+    message_filters::Subscriber<MotorSpeed> sub_rr(n,"/motor_speed_rr", 1);
+    message_filters::TimeSynchronizer<MotorSpeed,MotorSpeed,MotorSpeed,MotorSpeed>sync(sub_fl,sub_fr,sub_rl, sub_rr, 1);
+    //sync.registerCallback(boost::bind(&pub_sub::callback_all_messages, this, _1,_2,_3,_4));
+    pub = n.advertise<MotorSpeed>("/odom_my", 1);
     timer1 = n.createTimer(ros::Duration(1), &pub_sub::callback_t, this);
-  }
-
-  void callback_fl(const robotics_hw1::MotorSpeed msg){
-    speed_fl=msg;
-  }
-
-  void callback_fr(const robotics_hw1::MotorSpeed msg){
-    speed_fr=msg;
-  }
-
-  void callback_rl(const robotics_hw1::MotorSpeed msg){
-    speed_rl=msg;
-  }
-
-  void callback_rr(const robotics_hw1::MotorSpeed msg){
-    speed_rr=msg;
   }
   
 

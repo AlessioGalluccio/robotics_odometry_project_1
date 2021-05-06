@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   robotics_hw1
   roscpp
   rospy
+  message_filters
 )
 
 ## System dependencies are found with CMake's conventions
