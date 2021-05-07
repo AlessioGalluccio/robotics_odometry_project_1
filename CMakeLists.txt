@@ -13,6 +13,9 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   geometry_msgs
   message_filters
+  tf
+  tf2
+  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
