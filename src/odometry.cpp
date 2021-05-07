@@ -58,7 +58,7 @@ public:
     const int SECONDS_IN_MINUTE = 60;
     const double RADIUS_WHEEL = 0.1575;
     const double ROTATION_PER_MINUTE = 1/(RADIUS_WHEEL*2*M_PI);
-    const double Y0 = 0.392;
+    const double Y0 = 0.49;
     double vel_right = (fr_rpm + rr_rpm)/(2*ROTATION_PER_MINUTE*GEAR_RATIO*SECONDS_IN_MINUTE);
     double vel_left = -(fl_rpm + rl_rpm)/(2*ROTATION_PER_MINUTE*GEAR_RATIO*SECONDS_IN_MINUTE);
     self_speed result;
@@ -78,7 +78,7 @@ public:
       //we publish the transform over tf
       geometry_msgs::TransformStamped odom_trans;
       odom_trans.header.stamp = sub_fl->header.stamp;
-      odom_trans.header.frame_id = "odom_mine";
+      odom_trans.header.frame_id = "odom";
       odom_trans.child_frame_id = "base_link";
 
       odom_trans.transform.translation.x = new_positions.x;
@@ -91,7 +91,7 @@ public:
       //we publish the odometry message over ROS
       nav_msgs::Odometry odom;
       odom.header.stamp = sub_fl->header.stamp;
-      odom.header.frame_id = "odom_mine";
+      odom.header.frame_id = "odom";
 
       odom.pose.pose.position.x = new_positions.x;
       odom.pose.pose.position.y = new_positions.y;
