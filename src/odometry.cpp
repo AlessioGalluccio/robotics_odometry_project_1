@@ -52,6 +52,27 @@ public:
     }
     return result;
   }
+
+  global_coordinates rk(global_coordinates old_values, 
+                            self_speed speeds, 
+                            ros::Duration time_interval){
+    global_coordinates result;
+    double rk_correction = (speeds.v_orientation * time_interval.toSec()) / 2;
+    double v_global_x = speeds.v_forward * cos(old_values.o + rk_correction);
+    double v_global_y = speeds.v_forward * sin(old_values.o + rk_correction);
+
+    result.x = old_values.x + v_global_x * time_interval.toSec();
+    result.y = old_values.y + v_global_y * time_interval.toSec();
+    result.o = old_values.o + speeds.v_orientation * time_interval.toSec();
+    if(result.o > M_PI){
+      result.o = result.o - (2*M_PI);
+    }
+    if(result.o <= -M_PI){
+      result.o = result.o + (2*M_PI);
+    }
+    return result;
+  }
+
   self_speed skidSpeed(double fl_rpm, double fr_rpm, 
                 double rl_rpm, double rr_rpm){
     const int GEAR_RATIO = 40;
@@ -71,7 +92,7 @@ public:
       //speed_fl = sub_fl;
       //ROS_INFO("Callback all triggered: %f", speed_fl->rpm);
       self_speed speeds = skidSpeed(sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
-      global_coordinates new_positions = euler(current_pos,speeds,sub_fl->header.stamp - *last_time);
+      global_coordinates new_positions = rk(current_pos,speeds,sub_fl->header.stamp - *last_time);
       
       geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(new_positions.o);
 
@@ -105,23 +126,14 @@ public:
 
       odom_pub.publish(odom);
 
+      //update of values of the variables of the class
       current_pos.x = new_positions.x;
       current_pos.y = new_positions.y;
       current_pos.o = new_positions.o;
       *last_time = sub_fl->header.stamp;
+      //code for debug
       ROS_INFO("new pos: X: %f Y: %f o: %f", current_pos.x, current_pos.y, current_pos.o);
       ROS_INFO("Callback ALL triggered %f %f %f %f", sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
-      
-      
-
-
-      /*
-      transform.setOrigin( tf::Vector3(0, 0, 0) );
-      tf::Quaternion q;
-      q.setRPY(0, 0, 0);
-      transform.setRotation(q);
-      br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "turtle"));
-      */
   }
 
   pub_sub(){
@@ -162,13 +174,6 @@ private:
   ros::Time *last_time;
   
 };
-
-
-void callback_all_messages(const MotorSpeedConstPtr& sub_fl, const MotorSpeedConstPtr& sub_fr, const MotorSpeedConstPtr& sub_rl,const MotorSpeedConstPtr& sub_rr){
-    //speed_fl = sub_fl;
-    //ROS_INFO("Callback all triggered: %f", speed_fl->rpm);
-    ROS_INFO("Callback ALL triggered %f %f %f %f", sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
-  }
 
 int main(int argc, char **argv){
   ros::init(argc, argv, "odom_mine");
