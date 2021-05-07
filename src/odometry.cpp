@@ -6,6 +6,7 @@
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <tf/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
 
 #include <sstream>
 #include <math.h>
@@ -22,7 +23,6 @@ typedef struct{
     double x;
     double y;
     double o;
-    ros::Duration time;
 } global_coordinates;
 
 
@@ -56,8 +56,9 @@ public:
                 double rl_rpm, double rr_rpm){
     const int GEAR_RATIO = 40;
     const int SECONDS_IN_MINUTE = 60;
-    const double ROTATION_PER_MINUTE = 1/(0.1575*2*M_PI);
-    const double Y0 = 0.39;
+    const double RADIUS_WHEEL = 0.1575;
+    const double ROTATION_PER_MINUTE = 1/(RADIUS_WHEEL*2*M_PI);
+    const double Y0 = 0.392;
     double vel_right = (fr_rpm + rr_rpm)/(2*ROTATION_PER_MINUTE*GEAR_RATIO*SECONDS_IN_MINUTE);
     double vel_left = -(fl_rpm + rl_rpm)/(2*ROTATION_PER_MINUTE*GEAR_RATIO*SECONDS_IN_MINUTE);
     self_speed result;
@@ -71,17 +72,56 @@ public:
       //ROS_INFO("Callback all triggered: %f", speed_fl->rpm);
       self_speed speeds = skidSpeed(sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
       global_coordinates new_positions = euler(current_pos,speeds,sub_fl->header.stamp - *last_time);
+      
+      geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(new_positions.o);
+
+      //we publish the transform over tf
+      geometry_msgs::TransformStamped odom_trans;
+      odom_trans.header.stamp = sub_fl->header.stamp;
+      odom_trans.header.frame_id = "odom_mine";
+      odom_trans.child_frame_id = "base_link";
+
+      odom_trans.transform.translation.x = new_positions.x;
+      odom_trans.transform.translation.y = new_positions.y;
+      odom_trans.transform.translation.z = 0.0;
+      odom_trans.transform.rotation = odom_quat;
+
+      br.sendTransform(odom_trans);
+
+      //we publish the odometry message over ROS
+      nav_msgs::Odometry odom;
+      odom.header.stamp = sub_fl->header.stamp;
+      odom.header.frame_id = "odom_mine";
+
+      odom.pose.pose.position.x = new_positions.x;
+      odom.pose.pose.position.y = new_positions.y;
+      odom.pose.pose.position.z = 0.0;
+      odom.pose.pose.orientation = odom_quat;
+
+      odom.child_frame_id = "base_link";
+      odom.twist.twist.linear.x = speeds.v_forward * cos(current_pos.o);
+      odom.twist.twist.linear.y = speeds.v_forward * sin(current_pos.o);
+      odom.twist.twist.angular.z = speeds.v_orientation;
+
+      odom_pub.publish(odom);
+
       current_pos.x = new_positions.x;
       current_pos.y = new_positions.y;
       current_pos.o = new_positions.o;
       *last_time = sub_fl->header.stamp;
       ROS_INFO("new pos: X: %f Y: %f o: %f", current_pos.x, current_pos.y, current_pos.o);
       ROS_INFO("Callback ALL triggered %f %f %f %f", sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
+      
+      
+
+
+      /*
       transform.setOrigin( tf::Vector3(0, 0, 0) );
       tf::Quaternion q;
       q.setRPY(0, 0, 0);
       transform.setRotation(q);
       br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "turtle"));
+      */
   }
 
   pub_sub(){
@@ -94,6 +134,7 @@ public:
     sync_.reset(new Sync(MySyncPolicy(10), sub_fl,sub_fr, sub_rl, sub_rr));
     sync_->registerCallback(boost::bind(&pub_sub::callback_all_messages, this, _1,_2, _3, _4));
 
+    odom_pub = n.advertise<nav_msgs::Odometry>("odom_mine",50);
     current_pos.x = 0.0;
     current_pos.y = 0.0;
     current_pos.o = 0.0;
@@ -102,7 +143,7 @@ public:
 
 private: 
   ros::Subscriber sub;
-  ros::Publisher pub; 
+  ros::Publisher odom_pub; 
   ros::Timer timer1;
 
   message_filters::Subscriber<MotorSpeed> sub_fl;
