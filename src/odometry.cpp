@@ -25,6 +25,11 @@ typedef struct{
     double o;
 } global_coordinates;
 
+enum IntegrationMethod {
+  EULER,
+  RK,
+};
+
 
 class pub_sub {
 
@@ -92,8 +97,15 @@ public:
       //speed_fl = sub_fl;
       //ROS_INFO("Callback all triggered: %f", speed_fl->rpm);
       self_speed speeds = skidSpeed(sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
-      global_coordinates new_positions = rk(current_pos,speeds,sub_fl->header.stamp - *last_time);
-      
+      global_coordinates new_positions;
+      switch(integrationMethod){
+        case RK:
+          new_positions = rk(current_pos,speeds,sub_fl->header.stamp - *last_time);
+        break;
+        case EULER:
+          new_positions = euler(current_pos,speeds,sub_fl->header.stamp - *last_time);
+        break;
+      }
       geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(new_positions.o);
 
       //we publish the transform over tf
@@ -136,6 +148,16 @@ public:
       ROS_INFO("Callback ALL triggered %f %f %f %f", sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
   }
 
+  //set pose of the robot
+  //x: position x of the robot
+  //y: position y of the robot
+  //o: orientation of the robot (in gradient)
+  void setPose(double x, double y, double o){
+    current_pos.x = x;
+    current_pos.y = y;
+    current_pos.o = o;
+  }
+
   pub_sub(){
     ros::NodeHandle n;
     sub_fl.subscribe(n,"motor_speed_fl", 1);
@@ -151,6 +173,7 @@ public:
     current_pos.y = 0.0;
     current_pos.o = 0.0;
     last_time = new ros::Time(0.0);
+    integrationMethod = RK;
   }
 
 private: 
@@ -172,6 +195,7 @@ private:
 
   global_coordinates current_pos;
   ros::Time *last_time;
+  IntegrationMethod integrationMethod;
   
 };
 
