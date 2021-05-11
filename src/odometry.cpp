@@ -42,7 +42,7 @@ public:
   MotorSpeedConstPtr speed_rl;
   MotorSpeedConstPtr speed_rr;
 
-  global_coordinates euler(global_coordinates old_values, 
+  global_coordinates euler_method(global_coordinates old_values, 
                             self_speed speeds, 
                             ros::Duration time_interval){
     global_coordinates result;
@@ -61,7 +61,7 @@ public:
     return result;
   }
 
-  global_coordinates rk(global_coordinates old_values, 
+  global_coordinates rk_method(global_coordinates old_values, 
                         self_speed speeds, 
                         ros::Duration time_interval){
     global_coordinates result;
@@ -102,10 +102,10 @@ public:
       global_coordinates new_positions;
       switch(integrationMethod){
         case RK:
-          new_positions = rk(current_pos,speeds,sub_fl->header.stamp - *last_time);
+          new_positions = rk_method(current_pos,speeds,sub_fl->header.stamp - *last_time);
         break;
         case EULER:
-          new_positions = euler(current_pos,speeds,sub_fl->header.stamp - *last_time);
+          new_positions = euler_method(current_pos,speeds,sub_fl->header.stamp - *last_time);
         break;
       }
       geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(new_positions.o);
@@ -160,6 +160,14 @@ public:
     current_pos.o = o;
   }
 
+  void setMethod(project_1::SetMethodConfig &config, uint32_t level){
+      switch(config.method){
+        case 0: integrationMethod = EULER;
+        break;
+        case 1: integrationMethod = RK;
+      }
+  }
+
   pub_sub(){
     ros::NodeHandle n;
     sub_fl.subscribe(n,"motor_speed_fl", 1);
@@ -176,6 +184,9 @@ public:
     current_pos.o = 0.0;
     last_time = new ros::Time(0.0);
     integrationMethod = RK;
+
+    f = boost::bind(&pub_sub::setMethod, this, _1, _2);
+    serverDynamicRec.setCallback(f);
   }
 
 private: 
@@ -199,7 +210,8 @@ private:
   ros::Time *last_time;
   IntegrationMethod integrationMethod;
 
-  dynamic_reconfigure::Server<project_1::SetMethodConfig> server;
+  dynamic_reconfigure::Server<project_1::SetMethodConfig> serverDynamicRec;
+  dynamic_reconfigure::Server<project_1::SetMethodConfig>::CallbackType f;
   
 };
 
