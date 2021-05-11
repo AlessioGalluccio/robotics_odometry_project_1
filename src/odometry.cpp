@@ -11,6 +11,8 @@
 #include <dynamic_reconfigure/server.h>
 #include <project_1/SetMethodConfig.h>
 
+#include "project_1/SetPose.h"
+
 #include <sstream>
 #include <math.h>
 
@@ -168,6 +170,13 @@ public:
       }
   }
 
+  bool setPoseService(project_1::SetPose::Request &req, 
+                      project_1::SetPose::Response &res){
+    setPose(req.x,req.y,req.o);
+    res.sum = req.x,req.y;
+    return true;
+  }
+
   pub_sub(){
     ros::NodeHandle n;
     sub_fl.subscribe(n,"motor_speed_fl", 1);
@@ -183,10 +192,12 @@ public:
     current_pos.y = 0.0;
     current_pos.o = 0.0;
     last_time = new ros::Time(0.0);
-    integrationMethod = RK;
+    integrationMethod = EULER;
 
     f = boost::bind(&pub_sub::setMethod, this, _1, _2);
     serverDynamicRec.setCallback(f);
+
+    service_pose = n.advertiseService("set_pose", &pub_sub::setPoseService, this);
   }
 
 private: 
@@ -213,6 +224,7 @@ private:
   dynamic_reconfigure::Server<project_1::SetMethodConfig> serverDynamicRec;
   dynamic_reconfigure::Server<project_1::SetMethodConfig>::CallbackType f;
   
+  ros::ServiceServer service_pose;
 };
 
 int main(int argc, char **argv){

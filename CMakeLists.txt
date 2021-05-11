@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
   dynamic_reconfigure
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -60,11 +61,12 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
+ add_service_files(
+   FILES
 #   Service1.srv
 #   Service2.srv
-# )
+    SetPose.srv
+ )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -74,10 +76,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+ generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -116,6 +118,7 @@ catkin_package(
 #  LIBRARIES project_1
 #  CATKIN_DEPENDS robotics_hw1 roscpp rospy geometry_msgs message_filters
 #  DEPENDS system_lib
+    CATKIN_DEPENDS message_runtime
 )
 
 ###########
@@ -165,11 +168,14 @@ add_executable(odometry src/odometry.cpp)
 # make sure configure headers are built before any node using them
 add_dependencies(odometry ${PROJECT_NAME}_gencfg)
 
+
 #add_dependencies(odometry ${${PROJECT_NAME}_EXPORTED_TARGETS})
 #add_dependencies(package_1 ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_dependencies(odometry custom_messages_generate_messages_cpp)
+add_dependencies(odometry project_1_generate_messages_cpp)
 target_link_libraries(odometry ${catkin_LIBRARIES})
+
+add_dependencies(odometry ${catkin_EXPORTED_TARGETS})
 
 
 
