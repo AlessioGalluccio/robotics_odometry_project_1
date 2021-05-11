@@ -12,6 +12,7 @@
 #include <project_1/SetMethodConfig.h>
 
 #include "project_1/SetPose.h"
+#include "project_1/ResetPose.h"
 
 #include <sstream>
 #include <math.h>
@@ -105,9 +106,11 @@ public:
       switch(integrationMethod){
         case RK:
           new_positions = rk_method(current_pos,speeds,sub_fl->header.stamp - *last_time);
+          ROS_INFO("method: RK");
         break;
         case EULER:
           new_positions = euler_method(current_pos,speeds,sub_fl->header.stamp - *last_time);
+          ROS_INFO("method: EULER");
         break;
       }
       geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(new_positions.o);
@@ -150,6 +153,7 @@ public:
       //code for debug
       ROS_INFO("new pos: X: %f Y: %f o: %f", current_pos.x, current_pos.y, current_pos.o);
       ROS_INFO("Callback ALL triggered %f %f %f %f", sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
+      
   }
 
   //set pose of the robot
@@ -167,13 +171,19 @@ public:
         case 0: integrationMethod = EULER;
         break;
         case 1: integrationMethod = RK;
+        break;
       }
   }
 
   bool setPoseService(project_1::SetPose::Request &req, 
                       project_1::SetPose::Response &res){
     setPose(req.x,req.y,req.o);
-    res.sum = req.x,req.y;
+    return true;
+  }
+
+  bool resetPoseService(project_1::ResetPose::Request &req, 
+                      project_1::ResetPose::Response &res){
+    setPose(0.0,0.0,0.0);
     return true;
   }
 
@@ -198,6 +208,7 @@ public:
     serverDynamicRec.setCallback(f);
 
     service_pose = n.advertiseService("set_pose", &pub_sub::setPoseService, this);
+    service_reset = n.advertiseService("reset_pose", &pub_sub::resetPoseService, this);
   }
 
 private: 
@@ -223,8 +234,9 @@ private:
 
   dynamic_reconfigure::Server<project_1::SetMethodConfig> serverDynamicRec;
   dynamic_reconfigure::Server<project_1::SetMethodConfig>::CallbackType f;
-  
+    
   ros::ServiceServer service_pose;
+  ros::ServiceServer service_reset;
 };
 
 int main(int argc, char **argv){

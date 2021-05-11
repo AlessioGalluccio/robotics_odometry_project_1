@@ -66,6 +66,7 @@ find_package(catkin REQUIRED COMPONENTS
 #   Service1.srv
 #   Service2.srv
     SetPose.srv
+    ResetPose.srv
  )
 
 ## Generate actions in the 'action' folder
