@@ -195,25 +195,54 @@ public:
 
   pub_sub(){
     ros::NodeHandle n;
+    //setting subscribers 
     sub_fl.subscribe(n,"motor_speed_fl", 1);
     sub_fr.subscribe(n,"motor_speed_fr", 1);
     sub_rl.subscribe(n,"motor_speed_rl", 1);
     sub_rr.subscribe(n,"motor_speed_rr", 1);
 
+    //setting message filter
     sync_.reset(new Sync(MySyncPolicy(10), sub_fl,sub_fr, sub_rl, sub_rr));
     sync_->registerCallback(boost::bind(&pub_sub::callback_all_messages, this, _1,_2, _3, _4));
 
+    //setting publishers
     odom_only_pub = n.advertise<nav_msgs::Odometry>("odom_only",50);
     odom_method_pub = n.advertise<project_1::OdomAndMethod>("odom_and_method",50);
-    current_pos.x = 0.0;
-    current_pos.y = 0.0;
-    current_pos.o = 0.0;
-    last_time = new ros::Time(0.0);
-    integrationMethod = EULER;
 
+    //loading starting pose
+    if(!n.getParam("x", current_pos.x)){
+      ROS_ERROR("Failed to load x coordinate");
+    }
+    if(!n.getParam("y", current_pos.y)){
+      ROS_ERROR("Failed to load y coordinate");
+    }
+    if(!n.getParam("o", current_pos.o)){
+      ROS_ERROR("Failed to load o orientation");
+    }
+
+    //set time to 0
+    last_time = new ros::Time(0.0);
+
+    //loading integration method
+    std::string param_method;
+    if(!n.getParam("method", param_method)){
+      ROS_ERROR("Failed to load integration method");
+    }
+    if(param_method == "euler") {
+      integrationMethod = EULER;
+    }
+    else if(param_method == "rk"){
+      integrationMethod = RK;
+    }
+    else{
+      ROS_ERROR("Integration method name is invalid");
+    }
+
+    //setting dynamic reconfiguration
     f = boost::bind(&pub_sub::setMethod, this, _1, _2);
     serverDynamicRec.setCallback(f);
 
+    //setting "set_pose" and "reset_pose" services
     service_pose = n.advertiseService("set_pose", &pub_sub::setPoseService, this);
     service_reset = n.advertiseService("reset_pose", &pub_sub::resetPoseService, this);
   }

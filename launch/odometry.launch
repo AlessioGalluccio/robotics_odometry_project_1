@@ -1,0 +1,13 @@
+<launch>
+
+<param name="x" value="0.0" />
+<param name="y" value="0.0" />
+<param name="o" value="0.0" />
+<param name="method" value="euler" />
+
+<node pkg="project_1" name="odometry"
+type="odometry" output="screen"/>
+
+
+
+</launch>
