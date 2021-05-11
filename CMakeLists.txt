@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf2
   tf2_ros
+  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -93,10 +94,13 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
+generate_dynamic_reconfigure_options(
 #   cfg/DynReconf1.cfg
 #   cfg/DynReconf2.cfg
-# )
+    cfg/SetMethod.cfg
+)
+
+#catkin_package(CATKIN_DEPENDS dynamic_reconfigure)
 
 ###################################
 ## catkin specific configuration ##
@@ -155,9 +159,19 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
+
 add_executable(odometry src/odometry.cpp)
+
+# make sure configure headers are built before any node using them
+add_dependencies(odometry ${PROJECT_NAME}_gencfg)
+
+#add_dependencies(odometry ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#add_dependencies(package_1 ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
 add_dependencies(odometry custom_messages_generate_messages_cpp)
 target_link_libraries(odometry ${catkin_LIBRARIES})
+
+
 
 #############
 ## Install ##

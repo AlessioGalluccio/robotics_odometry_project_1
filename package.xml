@@ -64,6 +64,8 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>message_filters</exec_depend>
 
+  <depend>dynamic_reconfigure</depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

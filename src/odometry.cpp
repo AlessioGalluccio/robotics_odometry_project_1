@@ -8,6 +8,9 @@
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <project_1/SetMethodConfig.h>
+
 #include <sstream>
 #include <math.h>
 
@@ -59,8 +62,8 @@ public:
   }
 
   global_coordinates rk(global_coordinates old_values, 
-                            self_speed speeds, 
-                            ros::Duration time_interval){
+                        self_speed speeds, 
+                        ros::Duration time_interval){
     global_coordinates result;
     double rk_correction = (speeds.v_orientation * time_interval.toSec()) / 2;
     double v_global_x = speeds.v_forward * cos(old_values.o + rk_correction);
@@ -79,7 +82,7 @@ public:
   }
 
   self_speed skidSpeed(double fl_rpm, double fr_rpm, 
-                double rl_rpm, double rr_rpm){
+                        double rl_rpm, double rr_rpm){
     const int GEAR_RATIO = 40;
     const int SECONDS_IN_MINUTE = 60;
     const double RADIUS_WHEEL = 0.1575;
@@ -93,9 +96,8 @@ public:
     return result;
   }
 
-  void callback_all_messages(const MotorSpeedConstPtr& sub_fl, const MotorSpeedConstPtr& sub_fr, const MotorSpeedConstPtr& sub_rl,const MotorSpeedConstPtr& sub_rr){
-      //speed_fl = sub_fl;
-      //ROS_INFO("Callback all triggered: %f", speed_fl->rpm);
+  void callback_all_messages(const MotorSpeedConstPtr& sub_fl, const MotorSpeedConstPtr& sub_fr,
+                             const MotorSpeedConstPtr& sub_rl, const MotorSpeedConstPtr& sub_rr){
       self_speed speeds = skidSpeed(sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
       global_coordinates new_positions;
       switch(integrationMethod){
@@ -196,6 +198,8 @@ private:
   global_coordinates current_pos;
   ros::Time *last_time;
   IntegrationMethod integrationMethod;
+
+  dynamic_reconfigure::Server<project_1::SetMethodConfig> server;
   
 };
 
