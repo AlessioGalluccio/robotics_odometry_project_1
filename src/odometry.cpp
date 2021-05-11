@@ -7,6 +7,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
+#include <project_1/OdomAndMethod.h>
 
 #include <dynamic_reconfigure/server.h>
 #include <project_1/SetMethodConfig.h>
@@ -103,13 +104,16 @@ public:
                              const MotorSpeedConstPtr& sub_rl, const MotorSpeedConstPtr& sub_rr){
       self_speed speeds = skidSpeed(sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
       global_coordinates new_positions;
+      project_1::OdomAndMethod msg_odom_method;
       switch(integrationMethod){
         case RK:
           new_positions = rk_method(current_pos,speeds,sub_fl->header.stamp - *last_time);
+          msg_odom_method.method.data = "rk";
           ROS_INFO("method: RK");
         break;
         case EULER:
           new_positions = euler_method(current_pos,speeds,sub_fl->header.stamp - *last_time);
+          msg_odom_method.method.data = "euler";
           ROS_INFO("method: EULER");
         break;
       }
@@ -143,7 +147,9 @@ public:
       odom.twist.twist.linear.y = speeds.v_forward * sin(current_pos.o);
       odom.twist.twist.angular.z = speeds.v_orientation;
 
-      odom_pub.publish(odom);
+      msg_odom_method.odom = odom;
+      odom_only_pub.publish(odom);
+      odom_method_pub.publish(msg_odom_method);
 
       //update of values of the variables of the class
       current_pos.x = new_positions.x;
@@ -197,7 +203,8 @@ public:
     sync_.reset(new Sync(MySyncPolicy(10), sub_fl,sub_fr, sub_rl, sub_rr));
     sync_->registerCallback(boost::bind(&pub_sub::callback_all_messages, this, _1,_2, _3, _4));
 
-    odom_pub = n.advertise<nav_msgs::Odometry>("odom_mine",50);
+    odom_only_pub = n.advertise<nav_msgs::Odometry>("odom_only",50);
+    odom_method_pub = n.advertise<project_1::OdomAndMethod>("odom_and_method",50);
     current_pos.x = 0.0;
     current_pos.y = 0.0;
     current_pos.o = 0.0;
@@ -213,7 +220,8 @@ public:
 
 private: 
   ros::Subscriber sub;
-  ros::Publisher odom_pub; 
+  ros::Publisher odom_only_pub;
+  ros::Publisher odom_method_pub; 
   ros::Timer timer1;
 
   message_filters::Subscriber<MotorSpeed> sub_fl;
