@@ -5,8 +5,8 @@
 <param name="o" value="0.0" />
 <param name="method" value="euler" />
 
-<node pkg="project_1" name="odometry"
-type="odometry" output="screen"/>
+<node pkg="project_1" name="odometry" type="odometry" output="screen"/>
+<node pkg="tf2_ros" type="static_transform_publisher" name="link_world__broadcaster" args="0.0 0.0 0.0 0.0 0.0 0.0 1.0 /world /odom" />
 
 
 
