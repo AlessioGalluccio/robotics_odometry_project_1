@@ -8,6 +8,7 @@
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 #include <project_1/OdomAndMethod.h>
+#include <geometry_msgs/TwistStamped.h>
 
 #include <dynamic_reconfigure/server.h>
 #include <project_1/SetMethodConfig.h>
@@ -102,9 +103,13 @@ public:
 
   void callback_all_messages(const MotorSpeedConstPtr& sub_fl, const MotorSpeedConstPtr& sub_fr,
                              const MotorSpeedConstPtr& sub_rl, const MotorSpeedConstPtr& sub_rr){
-      self_speed speeds = skidSpeed(sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
+      
       global_coordinates new_positions;
       project_1::OdomAndMethod msg_odom_method;
+      geometry_msgs::TwistStamped msg_speeds;
+
+      self_speed speeds = skidSpeed(sub_fl->rpm, sub_fr->rpm, sub_rl->rpm, sub_rr->rpm);
+
       switch(integrationMethod){
         case RK:
           new_positions = rk_method(current_pos,speeds,sub_fl->header.stamp - *last_time);
@@ -119,7 +124,7 @@ public:
       }
       geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(new_positions.o);
 
-      //we publish the transform over tf
+      //publish the transform over tf
       geometry_msgs::TransformStamped odom_trans;
       odom_trans.header.stamp = sub_fl->header.stamp;
       odom_trans.header.frame_id = "odom";
@@ -132,7 +137,7 @@ public:
 
       br.sendTransform(odom_trans);
 
-      //we publish the odometry message over ROS
+      //publish the odometry message
       nav_msgs::Odometry odom;
       odom.header.stamp = sub_fl->header.stamp;
       odom.header.frame_id = "odom";
@@ -150,6 +155,14 @@ public:
       msg_odom_method.odom = odom;
       odom_only_pub.publish(odom);
       odom_method_pub.publish(msg_odom_method);
+
+      //publish also the speeds in /speeds
+      msg_speeds.header.frame_id = "odom";
+      msg_speeds.header.stamp = sub_fl->header.stamp;
+      msg_speeds.twist.linear.x = speeds.v_forward * cos(current_pos.o);
+      msg_speeds.twist.linear.y = speeds.v_forward * sin(current_pos.o);
+      msg_speeds.twist.angular.z = speeds.v_orientation;
+      speeds_pub.publish(msg_speeds);
 
       //update of values of the variables of the class
       current_pos.x = new_positions.x;
@@ -208,6 +221,7 @@ public:
     //setting publishers
     odom_only_pub = n.advertise<nav_msgs::Odometry>("odom_only",50);
     odom_method_pub = n.advertise<project_1::OdomAndMethod>("odom_and_method",50);
+    speeds_pub = n.advertise<geometry_msgs::TwistStamped>("speeds",50);
 
     //loading starting pose
     if(!n.getParam("x", current_pos.x)){
@@ -251,6 +265,7 @@ private:
   ros::Subscriber sub;
   ros::Publisher odom_only_pub;
   ros::Publisher odom_method_pub; 
+  ros::Publisher speeds_pub;
   ros::Timer timer1;
 
   message_filters::Subscriber<MotorSpeed> sub_fl;
