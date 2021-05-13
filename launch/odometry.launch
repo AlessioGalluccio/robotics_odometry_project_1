@@ -6,7 +6,7 @@
 <param name="method" value="euler" />
 
 <node pkg="project_1" name="odometry" type="odometry" output="screen"/>
-<node pkg="tf2_ros" type="static_transform_publisher" name="link_world__broadcaster" args="0.0 0.0 0.0 0.0 0.0 0.0 1.0 /world /odom" />
+<node pkg="tf2_ros" type="static_transform_publisher" name="link_world__broadcaster" args="-0.832142 0.426362 0.324720 0.022165 -0.010446 -0.533567 -0.845403 /world /odom" />
 
 
 
