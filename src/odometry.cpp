@@ -162,13 +162,14 @@ public:
   //returns: forward speed and orientation in self_speed format
   self_speed skidSpeed(double fl_rpm, double fr_rpm, 
                         double rl_rpm, double rr_rpm){
-    const int GEAR_RATIO = 40;
+    const int GEAR_RATIO = 40; //gear ratio of the motor
     const int SECONDS_IN_MINUTE = 60;
-    const double RADIUS_WHEEL = 0.1575;
-    const double ROTATION_PER_MINUTE = 1/(RADIUS_WHEEL*2*M_PI);
-    const double Y0 = 0.49;
-    double vel_right = (fr_rpm + rr_rpm)/(2*ROTATION_PER_MINUTE*GEAR_RATIO*SECONDS_IN_MINUTE);
-    double vel_left = -(fl_rpm + rl_rpm)/(2*ROTATION_PER_MINUTE*GEAR_RATIO*SECONDS_IN_MINUTE);
+    const double RADIUS_WHEEL = 0.1575; //radius of a wheel of a robot
+    const double ROTATION_PER_METER = 1/(RADIUS_WHEEL*2*M_PI); //rotations needed to move forward by a meter
+    const double Y0 = 0.494; //estimated Y0
+    double vel_right = (fr_rpm + rr_rpm)/(2*ROTATION_PER_METER*GEAR_RATIO*SECONDS_IN_MINUTE);
+    //speeds of left side are reversed because motor is mounted in the "same way" of the right side
+    double vel_left = -(fl_rpm + rl_rpm)/(2*ROTATION_PER_METER*GEAR_RATIO*SECONDS_IN_MINUTE);
     self_speed result;
     result.v_forward = (vel_right + vel_left)/2;
     result.v_orientation = (-vel_left + vel_right)/(2*Y0);
