@@ -1,12 +1,14 @@
 <launch>
-
+<!-- parameters to set the starting position of the robot. x, y and orientation -->
 <param name="x" value="0.0" />
 <param name="y" value="0.0" />
 <param name="o" value="0.0" />
+<!-- set integration method to "euler" (euler method) or "rk" (runge-kutta) -->
 <param name="method" value="euler" />
 
+<!-- start node odometry and tf static trasformation between world and odom frames -->
 <node pkg="project_1" name="odometry" type="odometry" output="screen"/>
-<node pkg="tf2_ros" type="static_transform_publisher" name="link_world__broadcaster" args="-0.832142 0.426362 0.324720 0.022165 -0.010446 -0.533567 -0.845403 /world /odom" />
+<node pkg="tf2_ros" type="static_transform_publisher" name="link_world_broadcaster" args="-0.832142 0.426362 0.324720 0.022165 -0.010446 -0.533567 -0.845403 /world /odom" />
 
 
 
