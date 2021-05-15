@@ -3,6 +3,8 @@
 <param name="x" value="0.0" />
 <param name="y" value="0.0" />
 <param name="o" value="0.0" />
+<!-- set starting time -->
+<param name="t" value="0.0" />
 <!-- set integration method to "euler" (euler method) or "rk" (runge-kutta) -->
 <param name="method" value="euler" />
 

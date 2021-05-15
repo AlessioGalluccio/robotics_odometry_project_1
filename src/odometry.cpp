@@ -73,7 +73,17 @@ public:
       }
 
       //set time to 0
-      last_time = new ros::Time(0.0);
+      double time;
+      if(!n.getParam("t", time)){
+        ROS_ERROR("Failed to load starting time");
+      }
+      else if(time < 0.0){
+        ROS_ERROR("Negative time is invalid input");
+      }
+      else{
+        last_time = new ros::Time(time);
+      }
+      
 
       //loading integration method
       std::string param_method;
@@ -341,7 +351,7 @@ public:
 };
 
 int main(int argc, char **argv){
-  ros::init(argc, argv, "odom_mine");
+  ros::init(argc, argv, "odometry");
   pub_sub my_pub_sub;
   ros::spin();
   return 0;
