@@ -18,7 +18,7 @@ Alessio Galluccio 10568346
 ##############################################
 DESCRIPTION OF THE FILES
 ##############################################
-Apparent_baseline_and_Gear_ratio_estimation.ipynb -> python notebook that I used to estimate the apparent baseline and the gear ratio from bag1 (using bagpy)
+estimation_notebook/Apparent_baseline_and_Gear_ratio_estimation.ipynb -> python notebook that I used to estimate the apparent baseline and the gear ratio from bag1 (using bagpy)
 							from both odom and gt_pose values. 
 							The notebook is set up to automatically download the dataset needed from a repository of mine and it explains the method used.
 							See "important info" for more details
@@ -114,7 +114,7 @@ Before starting the nodes, remember to include the "robotics_hw1" package in you
 IMPORTANT INFO
 ##############################################
 
-- The method used for the estimation of the apparent baseline and the gear ratio can be found in the notebook Apparent_baseline_and_Gear_ratio_estimation.ipynb .
+- The method used for the estimation of the apparent baseline and the gear ratio can be found in the notebook Apparent_baseline_and_Gear_ratio_estimation.ipynb in estimation_notebook folder.
 I used the sum of the squared errors of position x, y and orientation as loss function and I did a simple search for both parameters in an interval of reasonable values.
 As dataset I used the values of bag1. I extracted them in csv files using the bagpy library.
 I used this approach because it seemed more systematic and professional to me than doing random experiments, and it permitted me to do a fast and accurate search of the best parameters. 
